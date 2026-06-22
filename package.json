@@ -1,0 +1,28 @@
+{
+  "name": "mantra4change-pbl-platform",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "PBL Program Intelligence & Grant Reporting Assistant",
+  "scripts": {
+    "install:all": "npm install && npm install --prefix server && npm install --prefix client",
+    "seed": "npm run seed --prefix server",
+    "dev": "concurrently -n SERVER,CLIENT -c blue,green \"npm run dev --prefix server\" \"npm run dev --prefix client\"",
+    "dev:server": "npm run dev --prefix server",
+    "dev:client": "npm run dev --prefix client",
+    "test": "npm test --prefix server",
+    "setup": "npm run install:all && npm run seed"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ARTiwary/Mantra4Chnage.git"
+  },
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ARTiwary/Mantra4Chnage/issues"
+  },
+  "homepage": "https://github.com/ARTiwary/Mantra4Chnage#readme",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
