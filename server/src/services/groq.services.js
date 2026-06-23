@@ -9,26 +9,19 @@ const groq = apiKey ? new Groq({ apiKey }) : null;
 /**
  * Groq Narrative Service
  *
- * Hard guardrail (per assignment spec): the grant reporting workflow must
- * still produce a usable, fact-grounded report section even if AI is
+ * Hard guardrail (per assignment spec): every narrative-generating workflow
+ * must still produce a usable, fact-grounded report section even if AI is
  * disabled or unreachable. This service NEVER throws past its own
  * boundary — every code path returns usable text, either AI-generated or
  * a deterministic fallback built directly from computed facts.
- *
- * The fallback is not a placeholder string — it's a real, readable summary
- * assembled from the same fact set passed to the LLM, so disabling AI
- * degrades quality, not function.
  */
 export class GroqService {
     static isEnabled() {
         return Boolean(groq);
     }
 
-    /**
-     * Build the deterministic fallback narrative from computed facts only.
-     * Used both as the AI-disabled output and as the recovery path if the
-     * Groq call fails.
-     */
+    // ---- Grant Reporting Assistant -----------------------------------------
+
     static buildFallbackNarrative(basePerformance, financeData = []) {
         const pct = (v) => `${((v || 0) * 100).toFixed(1)}%`;
 
@@ -48,23 +41,11 @@ export class GroqService {
         ].join('\n');
     }
 
-    /**
-     * Produce a report-ready narrative paragraph from grant performance and
-     * finance facts. Uses Groq if configured; otherwise returns the
-     * deterministic fallback directly. Never reaches outside the provided
-     * data — the prompt explicitly instructs the model not to invent facts.
-     */
     static async generateGrantNarrative({ performanceData, financeData }) {
         const basePerformance = (performanceData && performanceData[0]) || {};
         const fallbackText = this.buildFallbackNarrative(basePerformance, financeData || []);
 
-        if (!groq) {
-            console.log('[GroqService] No API key configured — using deterministic fallback.');
-            return { narrative: fallbackText, source: 'deterministic', usedAi: false };
-        }
-
-        try {
-            const prompt = `
+        const prompt = `
 You are a monitoring & evaluation narrative assistant for an education NGO.
 Write a professional, report-ready paragraph for a donor using ONLY the data below.
 Do not invent any names, numbers, locations, or achievements not present in this data.
@@ -97,11 +78,126 @@ INSTRUCTIONS:
 3. Use only the figures given above — do not estimate, round dramatically, or add unstated context.
 `.trim();
 
+        return this._callWithFallback(prompt, fallbackText);
+    }
+
+    // ---- Monthly Review Summary (Tier 2) -----------------------------------
+
+    static async generateReviewSummaryNarrative(insight) {
+        const fallbackText = this.buildReviewSummaryFallback(insight);
+
+        const prompt = `
+You are writing a program review summary for an education NGO's monthly leadership meeting.
+Use ONLY the structured data below. Do not invent districts, numbers, or events not listed.
+
+REPORTING MONTH: ${insight.month}${insight.previousMonth ? ` (previous: ${insight.previousMonth})` : ''}
+
+HEADLINE METRICS:
+- Total schools: ${insight.headline.totalSchools}
+- Schools that conducted PBL: ${insight.headline.conductedCount}
+- Completion rate: ${(insight.headline.completionRate * 100).toFixed(1)}%
+- Evidence submission rate: ${(insight.headline.evidenceRate * 100).toFixed(1)}%
+- Attendance rate: ${(insight.headline.overallAttendanceRate * 100).toFixed(1)}%
+- Risk distribution: ${JSON.stringify(insight.headline.riskDistribution)}
+
+MONTH-OVER-MONTH MOVEMENT:
+${insight.movement ? JSON.stringify(insight.movement) : 'No prior month available for comparison.'}
+
+ACHIEVEMENTS (already computed deterministically):
+${insight.achievements.map(a => `- ${a}`).join('\n')}
+
+RISKS (already computed deterministically):
+${insight.risks.map(r => `- ${r}`).join('\n')}
+
+PRIORITY DISTRICTS NEEDING FOLLOW-UP:
+${insight.priorityDistricts.map(d => `- ${d.name}: ${d.risk} (${(d.attendanceRate * 100).toFixed(1)}% attendance)`).join('\n') || 'None flagged.'}
+
+PRIORITY BLOCKS NEEDING FOLLOW-UP:
+${insight.priorityBlocks.map(b => `- ${b.name}: ${b.risk} (${(b.attendanceRate * 100).toFixed(1)}% attendance)`).join('\n') || 'None flagged.'}
+
+INSTRUCTIONS:
+1. Write a short program review summary (5-7 sentences) covering achievements, risks, and where to focus follow-up.
+2. Use a clear, neutral tone suitable for a leadership meeting.
+3. Use only the figures and names listed above — do not add unstated districts, percentages, or events.
+`.trim();
+
+        return this._callWithFallback(prompt, fallbackText);
+    }
+
+    static buildReviewSummaryFallback(insight) {
+        return [
+            `Program Review Summary — ${insight.month}`,
+            `${insight.headline.conductedCount} of ${insight.headline.totalSchools} schools conducted PBL (${(insight.headline.completionRate * 100).toFixed(1)}% completion). Evidence submission: ${(insight.headline.evidenceRate * 100).toFixed(1)}%. Attendance: ${(insight.headline.overallAttendanceRate * 100).toFixed(1)}%.`,
+            '',
+            'Achievements:',
+            ...insight.achievements.map(a => `- ${a}`),
+            '',
+            'Risks:',
+            ...insight.risks.map(r => `- ${r}`),
+            '',
+            'Priority follow-up:',
+            ...insight.priorityDistricts.slice(0, 3).map(d => `- ${d.name} (district): ${d.risk}`),
+            ...insight.priorityBlocks.slice(0, 3).map(b => `- ${b.name} (block): ${b.risk}`),
+            '',
+            '[Deterministic summary — AI narrative generation is disabled or unavailable]'
+        ].join('\n');
+    }
+
+    // ---- Program Reporting Assistant (Tier 2) ------------------------------
+
+    static async generateGeographyNarrative(insight) {
+        const fallbackText = this.buildGeographyFallback(insight);
+
+        const prompt = `
+You are writing a short program update for one geography in an education monitoring program.
+Use ONLY the structured data below. Do not invent facts not listed.
+
+GEOGRAPHY: ${insight.geographyName} (${insight.geographyType})
+REPORTING MONTH: ${insight.month}${insight.previousMonth ? ` (previous: ${insight.previousMonth})` : ''}
+RISK STATUS: ${insight.calculatedRisk}
+
+METRICS:
+- Total schools: ${insight.headline.totalSchools}
+- Schools that conducted PBL: ${insight.headline.conductedCount}
+- Completion rate: ${(insight.headline.completionRate * 100).toFixed(1)}%
+- Evidence submission rate: ${(insight.headline.evidenceRate * 100).toFixed(1)}%
+- Attendance rate: ${(insight.headline.overallAttendanceRate * 100).toFixed(1)}%
+
+MONTH-OVER-MONTH MOVEMENT:
+${insight.movement ? JSON.stringify(insight.movement) : 'No prior month available for comparison.'}
+
+INSTRUCTIONS:
+1. Write 3-4 sentences summarizing this geography's status and whether it needs follow-up.
+2. Use only the figures given above.
+`.trim();
+
+        return this._callWithFallback(prompt, fallbackText);
+    }
+
+    static buildGeographyFallback(insight) {
+        return [
+            `${insight.geographyName} — ${insight.month}`,
+            `Status: ${insight.calculatedRisk}.`,
+            `${insight.headline.conductedCount} of ${insight.headline.totalSchools} schools conducted PBL (${(insight.headline.completionRate * 100).toFixed(1)}% completion). Attendance: ${(insight.headline.overallAttendanceRate * 100).toFixed(1)}%. Evidence: ${(insight.headline.evidenceRate * 100).toFixed(1)}%.`,
+            insight.movement ? `Attendance moved ${insight.movement.attendanceRateDelta >= 0 ? '+' : ''}${insight.movement.attendanceRateDelta.toFixed(1)}pp since ${insight.previousMonth}.` : 'No prior month available for comparison.',
+            '[Deterministic summary — AI narrative generation is disabled or unavailable]'
+        ].join('\n');
+    }
+
+    // ---- Shared core --------------------------------------------------------
+
+    static async _callWithFallback(prompt, fallbackText) {
+        if (!groq) {
+            console.log('[GroqService] No API key configured — using deterministic fallback.');
+            return { narrative: fallbackText, source: 'deterministic', usedAi: false };
+        }
+
+        try {
             const response = await groq.chat.completions.create({
                 messages: [{ role: 'user', content: prompt }],
                 model: 'llama-3.1-8b-instant',
                 temperature: 0.2,
-                max_tokens: 400
+                max_tokens: 500
             });
 
             const text = response.choices?.[0]?.message?.content;

@@ -1,7 +1,7 @@
 import React from 'react';
 import RiskBadge, { riskBarColor } from './RiskBadge.jsx';
 
-export default function GeographyTable({ title, rows, emptyLabel = 'No records for this selection' }) {
+export default function GeographyTable({ title, rows, emptyLabel = 'No records for this selection', onRowClick }) {
     const sorted = [...rows].sort((a, b) => a.overallAttendanceRate - b.overallAttendanceRate);
 
     return (
@@ -28,7 +28,11 @@ export default function GeographyTable({ title, rows, emptyLabel = 'No records f
                         </thead>
                         <tbody>
                             {sorted.map((r, i) => (
-                                <tr key={r.name} className={i < sorted.length - 1 ? 'ledger-rule' : ''}>
+                                <tr
+                                    key={r.name}
+                                    className={`${i < sorted.length - 1 ? 'ledger-rule' : ''} ${onRowClick ? 'cursor-pointer hover:bg-[var(--color-paper)] transition-colors' : ''}`}
+                                    onClick={onRowClick ? () => onRowClick(r) : undefined}
+                                >
                                     <td className="w-1.5 p-0">
                                         <div className="w-1.5 h-full" style={{ backgroundColor: riskBarColor(r.calculatedRisk) }} />
                                     </td>
