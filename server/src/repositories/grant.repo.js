@@ -2,7 +2,11 @@ import db from '../../db/connection.js';
 
 export class GrantRepository {
     static getAllProfiles() {
-        return db.prepare(`SELECT DISTINCT grant_id, donor, grant_name FROM grant_performance`).all();
+        return db.prepare(`SELECT DISTINCT grant_id, donor, grant_name FROM grant_performance ORDER BY grant_id ASC`).all();
+    }
+
+    static getDistinctMonths() {
+        return db.prepare(`SELECT DISTINCT reporting_month FROM grant_performance ORDER BY reporting_month ASC`).all().map(r => r.reporting_month);
     }
 
     static getPerformanceById(grantId, month) {
@@ -12,7 +16,8 @@ export class GrantRepository {
             sql += ` AND reporting_month = ?`;
             params.push(month);
         }
-        return db.prepare(sql).all(params);
+        sql += ` ORDER BY reporting_month ASC`;
+        return db.prepare(sql).all(...params);
     }
 
     static getFinancesById(grantId, month) {
@@ -22,7 +27,8 @@ export class GrantRepository {
             sql += ` AND reporting_month = ?`;
             params.push(month);
         }
-        return db.prepare(sql).all(params);
+        sql += ` ORDER BY budget_line ASC`;
+        return db.prepare(sql).all(...params);
     }
 
     static getMediaAssets(grantId, month) {
@@ -32,6 +38,6 @@ export class GrantRepository {
             sql += ` AND reporting_month = ?`;
             params.push(month);
         }
-        return db.prepare(sql).all(params);
+        return db.prepare(sql).all(...params);
     }
 }

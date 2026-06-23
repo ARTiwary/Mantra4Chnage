@@ -24,5 +24,8 @@
   "homepage": "https://github.com/ARTiwary/Mantra4Chnage#readme",
   "devDependencies": {
     "concurrently": "^8.2.2"
+  },
+  "dependencies": {
+    "@tailwindcss/vite": "^4.3.1"
   }
 }

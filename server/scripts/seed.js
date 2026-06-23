@@ -46,43 +46,33 @@ function seedPrimaryPblData() {
             const rawContent = fs.readFileSync(filePath, 'utf-8');
             const records = parse(rawContent, { columns: true, skip_empty_lines: true });
 
-            console.log(`Processing ${records.length} items for month: ${fileSpec.month}`);
+            console.log(`Processing ${records.length} rows for month: ${fileSpec.month}`);
 
             for (const row of records) {
-                // Read CSV header mapping precisely
-                const schoolName = row['What is the name of your school?'] || '';
-                const schoolCode = row["What is your school's synthetic school code?"] || '';
-                const districtName = row['What is the name of your district?'] || '';
-                const blockDetails = row['Block Details'] || '';
-                const conducted = row['Was the PBL project conducted in your school this month?'] || 'No';
-                const evidence = row['Was evidence submitted for the completed PBL project?'] || 'No';
-                const classes = row['In which class/classes did you conduct the PBL project?'] || '';
-                const subject = row['Which subject do you teach?'] || '';
-
-                const c6_enr = cleanNumber(row['Total number of students enrolled in Class 6, including all sections']);
-                const c6_sci = cleanNumber(row['Average student attendance during the Class 6 PBL Science session. If you did not teach Science in Class 6, enter 0.']);
-                const c6_mat = cleanNumber(row['Average student attendance during the Class 6 PBL Math session. If you did not teach Math in Class 6, enter 0.']);
-
-                const c7_enr = cleanNumber(row['Total number of students enrolled in Class 7, including all sections']);
-                const c7_sci = cleanNumber(row['Average student attendance during the Class 7 PBL Science session. If you did not teach Science in Class 7, enter 0.']);
-                const c7_mat = cleanNumber(row['Average student attendance during the Class 7 PBL Math session. If you did not teach Math in Class 7, enter 0.']);
-
-                const c8_enr = cleanNumber(row['Total number of students enrolled in Class 8, including all sections']);
-                const c8_sci = cleanNumber(row['Average student attendance during the Class 8 PBL Science session. If you did not teach Science in Class 8, enter 0.']);
-                const c8_mat = cleanNumber(row['Average student attendance during the Class 8 PBL Math session. If you did not teach Math in Class 8, enter 0.']);
-
-                const tot_enr = cleanNumber(row['Derived: Total enrollment across Classes 6-8']);
-                const tot_att = cleanNumber(row['Derived: Total attendance across PBL Science and Math sessions']);
-                const att_rate = cleanNumber(row['Derived: Overall PBL attendance rate']);
-                const risk_status = row['Derived: Risk status'] || 'Critical';
-
                 insertStmt.run(
-                    fileSpec.month, row['Timestamp'] || '', schoolName, schoolCode, districtName, blockDetails,
-                    conducted, evidence, classes, subject,
-                    c6_enr, c6_sci, c6_mat,
-                    c7_enr, c7_sci, c7_mat,
-                    c8_enr, c8_sci, c8_mat,
-                    tot_enr, tot_att, att_rate, risk_status
+                    fileSpec.month, 
+                    row['Timestamp'] || '', 
+                    row['What is the name of your school?'] || '', 
+                    row["What is your school's synthetic school code?"] || '', 
+                    row['What is the name of your district?'] || '', 
+                    row['Block Details'] || '',
+                    row['Was the PBL project conducted in your school this month?'] || 'No', 
+                    row['Was evidence submitted for the completed PBL project?'] || 'No', 
+                    row['In which class/classes did you conduct the PBL project?'] || '', 
+                    row['Which subject do you teach?'] || '',
+                    cleanNumber(row['Total number of students enrolled in Class 6, including all sections']),
+                    cleanNumber(row['Average student attendance during the Class 6 PBL Science session. If you did not teach Science in Class 6, enter 0.']),
+                    cleanNumber(row['Average student attendance during the Class 6 PBL Math session. If you did not teach Math in Class 6, enter 0.']),
+                    cleanNumber(row['Total number of students enrolled in Class 7, including all sections']),
+                    cleanNumber(row['Average student attendance during the Class 7 PBL Science session. If you did not teach Science in Class 7, enter 0.']),
+                    cleanNumber(row['Average student attendance during the Class 7 PBL Math session. If you did not teach Math in Class 7, enter 0.']),
+                    cleanNumber(row['Total number of students enrolled in Class 8, including all sections']),
+                    cleanNumber(row['Average student attendance during the Class 8 PBL Science session. If you did not teach Science in Class 8, enter 0.']),
+                    cleanNumber(row['Average student attendance during the Class 8 PBL Math session. If you did not teach Math in Class 8, enter 0.']),
+                    cleanNumber(row['Derived: Total enrollment across Classes 6-8']),
+                    cleanNumber(row['Derived: Total attendance across PBL Science and Math sessions']),
+                    cleanNumber(row['Derived: Overall PBL attendance rate']),
+                    row['Derived: Risk status'] || 'Critical'
                 );
             }
         }
@@ -91,12 +81,13 @@ function seedPrimaryPblData() {
     } catch (err) {
         db.exec('ROLLBACK;');
         console.error('Failed to seed primary responses:', err);
+        throw err;
     }
 }
 
 function seedGrantReportingEvidence() {
     console.log('\n--- Seeding Grant Reporting Metrics & Asset Records ---');
-    
+
     // 1. Finance Seeding
     const financePath = path.join(rootDataDir, 'grants', '01_Grant_Profile_and_Finance.csv');
     if (fs.existsSync(financePath)) {
@@ -109,16 +100,21 @@ function seedGrantReportingEvidence() {
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `);
         db.exec('BEGIN TRANSACTION;');
-        for (const row of data) {
-            stmt.run(
-                row.grant_id, row.donor, row.grant_name, row.period_start, row.period_end, row.covered_districts,
-                row.reporting_month, row.budget_line, cleanNumber(row.approved_budget_units),
-                cleanNumber(row.monthly_utilized_units), cleanNumber(row.cumulative_utilized_units),
-                cleanNumber(row.cumulative_utilization_rate), row.finance_note || ''
-            );
+        try {
+            for (const row of data) {
+                stmt.run(
+                    row['grant_id'], row['donor'], row['grant_name'], row['period_start'], row['period_end'], row['covered_districts'],
+                    row['reporting_month'], row['budget_line'], cleanNumber(row['approved_budget_units']),
+                    cleanNumber(row['monthly_utilized_units']), cleanNumber(row['cumulative_utilized_units']),
+                    cleanNumber(row['cumulative_utilization_rate']), row['finance_note'] || ''
+                );
+            }
+            db.exec('COMMIT;');
+            console.log(`Seeded ${data.length} grant finance budget rows.`);
+        } catch (err) {
+            db.exec('ROLLBACK;');
+            throw err;
         }
-        db.exec('COMMIT;');
-        console.log(`Seeded ${data.length} grant finance budget rows.`);
     }
 
     // 2. Performance Seeding
@@ -134,21 +130,26 @@ function seedGrantReportingEvidence() {
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `);
         db.exec('BEGIN TRANSACTION;');
-        for (const row of data) {
-            stmt.run(
-                row.grant_id, row.donor, row.grant_name, row.reporting_month, row.period_end_date, row.report_due_date,
-                row.report_status, row.covered_districts, cleanNumber(row.sampled_school_records),
-                cleanNumber(row.schools_completed_pbl), cleanNumber(row.pbl_completion_rate),
-                cleanNumber(row.schools_with_evidence), cleanNumber(row.evidence_submission_rate),
-                cleanNumber(row.total_enrollment), cleanNumber(row.total_attendance),
-                cleanNumber(row.attendance_rate), row.risk_status, row.milestone_summary, row.draft_report_text
-            );
+        try {
+            for (const row of data) {
+                stmt.run(
+                    row['grant_id'], row['donor'], row['grant_name'], row['reporting_month'], row['period_end_date'], row['report_due_date'],
+                    row['report_status'], row['covered_districts'], cleanNumber(row['sampled_school_records']),
+                    cleanNumber(row['schools_completed_pbl']), cleanNumber(row['pbl_completion_rate']),
+                    cleanNumber(row['schools_with_evidence']), cleanNumber(row['evidence_submission_rate']),
+                    cleanNumber(row['total_enrollment']), cleanNumber(row['total_attendance']),
+                    cleanNumber(row['attendance_rate']), row['risk_status'], row['milestone_summary'], row['draft_report_text']
+                );
+            }
+            db.exec('COMMIT;');
+            console.log(`Seeded ${data.length} grant performance rows.`);
+        } catch (err) {
+            db.exec('ROLLBACK;');
+            throw err;
         }
-        db.exec('COMMIT;');
-        console.log(`Seeded ${data.length} grant performance tracking matrices.`);
     }
 
-    // 3. Asset Index Seeding
+    // 3. Evidence/Media Index Seeding
     const mediaPath = path.join(rootDataDir, 'grants', '03_Evidence_and_Media_Index.csv');
     if (fs.existsSync(mediaPath)) {
         const data = parse(fs.readFileSync(mediaPath, 'utf-8'), { columns: true, skip_empty_lines: true });
@@ -159,24 +160,28 @@ function seedGrantReportingEvidence() {
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `);
         db.exec('BEGIN TRANSACTION;');
-        for (const row of data) {
-            stmt.run(
-                row.record_id, row.record_type, row.grant_id, row.donor, row.reporting_month,
-                row.district, row.title, row.summary_or_caption, row.file_name, row.relative_path, row.usage_note
-            );
+        try {
+            for (const row of data) {
+                stmt.run(
+                    row['record_id'], row['record_type'], row['grant_id'], row['donor'], row['reporting_month'],
+                    row['district'], row['title'], row['summary_or_caption'], row['file_name'], row['relative_path'], row['usage_note']
+                );
+            }
+            db.exec('COMMIT;');
+            console.log(`Seeded ${data.length} evidence/media index rows.`);
+        } catch (err) {
+            db.exec('ROLLBACK;');
+            throw err;
         }
-        db.exec('COMMIT;');
-        console.log(`Seeded ${data.length} asset index items into gallery catalog.`);
     }
 }
 
-// Perform sequential execution
 try {
     seedPrimaryPblData();
     seedGrantReportingEvidence();
-    console.log('\nAll datasets successfully compiled into production-ready SQLite container.');
+    console.log('\nAll datasets seeded successfully into SQLite.');
     process.exit(0);
 } catch (err) {
-    console.error('Critical operational failure during database build-out:', err);
+    console.error('Seed failed:', err);
     process.exit(1);
 }

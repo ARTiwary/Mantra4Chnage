@@ -1,122 +1,61 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import React, { useState } from 'react';
+import ReviewDashboard from './pages/ReviewDashboard.jsx';
+import GrantReporting from './pages/GrantReporting.jsx';
 
-function App() {
-  const [count, setCount] = useState(0)
+const TABS = [
+    { id: 'dashboard', label: 'Program review', detail: 'Filters, KPIs, district & block performance' },
+    { id: 'grants', label: 'Grant reporting', detail: 'Facts, evidence, report-ready narrative' }
+];
 
-  return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
+export default function App() {
+    const [tab, setTab] = useState('dashboard');
+    const active = TABS.find(t => t.id === tab);
+
+    return (
+        <div className="min-h-screen bg-[var(--color-paper)] text-[var(--color-ink)] flex flex-col lg:flex-row">
+            {/* Vertical tab rail — the signature layout element: a numbered
+                ledger index rather than a boxed sidebar nav. */}
+            <aside className="lg:w-64 border-b lg:border-b-0 lg:border-r border-[var(--color-rule)] shrink-0 bg-[var(--color-paper-raised)]">
+                <div className="px-6 py-6 border-b border-[var(--color-rule)]">
+                    <p className="text-[10px] font-semibold uppercase tracking-widest text-[var(--color-accent)]">Mantra4Change</p>
+                    <h1 className="font-display text-xl font-semibold tracking-tight mt-1 leading-tight">
+                        PBL Program<br />Intelligence
+                    </h1>
+                </div>
+                <nav className="flex lg:flex-col">
+                    {TABS.map((t, i) => (
+                        <button
+                            key={t.id}
+                            onClick={() => setTab(t.id)}
+                            className={`group flex-1 lg:flex-none text-left px-6 py-4 border-b lg:border-b border-[var(--color-rule)] transition-colors relative ${
+                                tab === t.id ? 'bg-[var(--color-paper)]' : 'hover:bg-[var(--color-paper)]/60'
+                            }`}
+                        >
+                            <span
+                                className="absolute left-0 top-0 bottom-0 w-0.5"
+                                style={{ backgroundColor: tab === t.id ? 'var(--color-accent)' : 'transparent' }}
+                            />
+                            <div className="flex items-baseline gap-2">
+                                <span className="font-mono-num text-[11px] text-[var(--color-ink-soft)]">0{i + 1}</span>
+                                <span className={`text-sm font-semibold ${tab === t.id ? 'text-[var(--color-ink)]' : 'text-[var(--color-ink-soft)]'}`}>
+                                    {t.label}
+                                </span>
+                            </div>
+                            <p className="text-[11px] text-[var(--color-ink-soft)] mt-1 hidden lg:block">{t.detail}</p>
+                        </button>
+                    ))}
+                </nav>
+            </aside>
+
+            <div className="flex-1 flex flex-col min-w-0">
+                <header className="border-b border-[var(--color-rule)] bg-[var(--color-paper-raised)] px-6 sm:px-10 py-5">
+                    <h2 className="font-display text-lg font-semibold tracking-tight">{active.label}</h2>
+                    <p className="text-xs text-[var(--color-ink-soft)] mt-0.5">{active.detail}</p>
+                </header>
+                <main className="flex-1 px-6 sm:px-10 py-8 max-w-[1400px] w-full mx-auto">
+                    {tab === 'dashboard' ? <ReviewDashboard /> : <GrantReporting />}
+                </main>
+            </div>
         </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+    );
 }
-
-export default App

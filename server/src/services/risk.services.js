@@ -1,19 +1,31 @@
 /**
  * Deterministic Risk Engine
- * Replicates program criteria purely based on attendance percentages and engagement metrics.
+ *
+ * This is the "program intelligence" layer the assignment calls out
+ * explicitly: risk classification must be code-based, not AI-based, and
+ * must work identically whether or not the AI integration is enabled.
+ *
+ * Thresholds (per assignment spec):
+ *   On Track  >= 75%
+ *   Behind    60% to < 75%
+ *   At Risk   35% to < 60%
+ *   Critical  < 35%
+ *
+ * A school/geography that did not conduct PBL at all is always Critical,
+ * regardless of attendance rate (there is no attendance to measure).
  */
 export class RiskService {
     /**
-     * Compute risk status for individual school records or aggregates
-     * @param {boolean} conducted - Did the school conduct the session?
-     * @param {number} attendanceRate - Calculated decimal rate (0.0 to 1.0)
-     * @returns {string} Risk Classification Label
+     * Compute risk status for an individual school record or an aggregate.
+     * @param {boolean} conducted - Did PBL get conducted at all?
+     * @param {number} attendanceRate - Decimal rate (0.0 to 1.0)
+     * @returns {'On Track'|'Behind'|'At Risk'|'Critical'}
      */
     static calculateRiskStatus(conducted, attendanceRate) {
         if (!conducted) return 'Critical';
-        
+
         const pct = attendanceRate * 100;
-        
+
         if (pct >= 75.0) return 'On Track';
         if (pct >= 60.0) return 'Behind';
         if (pct >= 35.0) return 'At Risk';
@@ -21,15 +33,23 @@ export class RiskService {
     }
 
     /**
-     * Determine hex styling for front-end rendering indicators
+     * Hex color for a given risk status, used by frontend badges/charts.
      */
     static getRiskColor(status) {
         switch (status) {
-            case 'On Track': return '#10B981'; // Vivid Green
-            case 'Behind':   return '#F59E0B'; // Soft Amber
-            case 'At Risk':  return '#EF4444'; // Orange-Red
-            case 'Critical': return '#7F1D1D'; // Dark Maroon
-            default:         return '#6B7280'; // Slate Grey
+            case 'On Track': return '#10B981'; // green
+            case 'Behind':   return '#F59E0B'; // amber
+            case 'At Risk':  return '#EF4444'; // red
+            case 'Critical': return '#7F1D1D'; // dark red
+            default:         return '#6B7280'; // grey
         }
+    }
+
+    /**
+     * Returns true if a status is considered "needs follow-up" for
+     * prioritization views (Behind, At Risk, Critical all qualify).
+     */
+    static needsFollowUp(status) {
+        return status !== 'On Track';
     }
 }

@@ -87,7 +87,7 @@ CREATE TABLE IF NOT EXISTS evidence_media_index (
     usage_note TEXT
 );
 
--- Indexes for lightning-fast performance dashboard aggregations
+-- Indexes for dashboard aggregation performance
 CREATE INDEX IF NOT EXISTS idx_responses_month_dist ON school_responses(reporting_month, district_name);
 CREATE INDEX IF NOT EXISTS idx_responses_block ON school_responses(block_details);
 CREATE INDEX IF NOT EXISTS idx_responses_risk ON school_responses(derived_risk_status);
