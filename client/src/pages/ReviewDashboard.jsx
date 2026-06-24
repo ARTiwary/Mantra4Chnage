@@ -1,9 +1,12 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import client from '../api/client.js';
 import FilterBar from '../components/filters/FilterBar.jsx';
 import KpiCards from '../components/dashboard/KpiCards.jsx';
 import TrendChart from '../components/dashboard/TrendChart.jsx';
 import GeographyTable from '../components/dashboard/GeographyTable.jsx';
+import GeographyDrilldown from '../components/dashboard/GeographyDrilldown.jsx';
+import ReviewSummaryPanel from './ReviewSummaryPanel.jsx';
+import RecommendedActions from './RecommendedActions.jsx';
 
 const EMPTY_OPTIONS = { months: [], districts: [], blocks: [], subjects: [], grades: [] };
 
@@ -15,6 +18,14 @@ export default function ReviewDashboard() {
     const [blocks, setBlocks] = useState([]);
     const [trend, setTrend] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [drilldown, setDrilldown] = useState(null); // { type, name } | null
+    const [aiEnabled, setAiEnabled] = useState(false);
+
+    useEffect(() => {
+        client.getAiStatus().then(res => {
+            if (res.success) setAiEnabled(res.data.aiEnabled);
+        });
+    }, []);
 
     // Load filter options once, default month = latest available
     useEffect(() => {
@@ -71,14 +82,35 @@ export default function ReviewDashboard() {
             <TrendChart monthlySummaries={trend} />
 
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                <GeographyTable title="District performance" rows={districts} />
-                <GeographyTable title="Block performance" rows={blocks} />
+                <GeographyTable
+                    title="District performance"
+                    rows={districts}
+                    onRowClick={(row) => setDrilldown({ type: 'district', name: row.name })}
+                />
+                <GeographyTable
+                    title="Block performance"
+                    rows={blocks}
+                    onRowClick={(row) => setDrilldown({ type: 'block', name: row.name })}
+                />
             </div>
+            <p className="text-[11px] text-[var(--color-ink-soft)] -mt-3">Click any row to open its detailed report.</p>
 
             {!loading && summary && summary.totalSchools === 0 && (
                 <div className="text-center py-12 text-sm text-[var(--color-ink-soft)] border border-dashed border-[var(--color-rule)] rounded-sm">
                     No schools match this filter combination. Try widening the selection.
                 </div>
+            )}
+
+            {filters.month && <ReviewSummaryPanel filters={filters} aiEnabled={aiEnabled} />}
+            {filters.month && <RecommendedActions filters={filters} />}
+
+            {drilldown && (
+                <GeographyDrilldown
+                    type={drilldown.type}
+                    name={drilldown.name}
+                    month={filters.month}
+                    onClose={() => setDrilldown(null)}
+                />
             )}
         </div>
     );

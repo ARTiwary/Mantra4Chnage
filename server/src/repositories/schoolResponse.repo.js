@@ -1,14 +1,7 @@
 import db from '../../db/connection.js';
 
 export class SchoolResponseRepository {
-    /**
-     * Query school records matching active filter parameters.
-     * Grade filtering happens in JS after the SQL query because the source
-     * data stores classes as a free-text string ("Classes 6, 7 and 8")
-     * rather than a normalized column — filtering in SQL would require a
-     * fragile LIKE pattern per grade anyway, so doing it in JS keeps the
-     * matching logic in one readable place.
-     */
+   
     static getFilteredResponses({ month, district, block, subject, grade } = {}) {
         let sql = `SELECT * FROM school_responses WHERE 1=1`;
         const params = [];

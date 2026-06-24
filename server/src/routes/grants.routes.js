@@ -4,10 +4,7 @@ import { GroqService } from '../services/groq.services.js';
 
 const router = Router();
 
-/**
- * GET /api/grants/list
- * All distinct grants available for selection.
- */
+
 router.get('/list', (req, res) => {
     try {
         const grants = GrantRepository.getAllProfiles();
@@ -18,11 +15,7 @@ router.get('/list', (req, res) => {
     }
 });
 
-/**
- * GET /api/grants/details/:grantId?month=2025-09
- * Fact panel: performance metrics, finance rows, and linked evidence/media
- * for the selected grant + month.
- */
+
 router.get('/details/:grantId', (req, res) => {
     try {
         const { grantId } = req.params;
@@ -45,13 +38,7 @@ router.get('/details/:grantId', (req, res) => {
     }
 });
 
-/**
- * POST /api/grants/narrative
- * Body: { performance: {...}, finances: [...] }
- * Generates a report-ready narrative section using only the supplied facts.
- * Falls back to a deterministic summary if AI is disabled or fails — this
- * endpoint never errors out just because the AI call failed.
- */
+
 router.post('/narrative', async (req, res) => {
     try {
         const { performance, finances } = req.body;

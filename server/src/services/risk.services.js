@@ -1,19 +1,3 @@
-/**
- * Deterministic Risk Engine
- *
- * This is the "program intelligence" layer the assignment calls out
- * explicitly: risk classification must be code-based, not AI-based, and
- * must work identically whether or not the AI integration is enabled.
- *
- * Thresholds (per assignment spec):
- *   On Track  >= 75%
- *   Behind    60% to < 75%
- *   At Risk   35% to < 60%
- *   Critical  < 35%
- *
- * A school/geography that did not conduct PBL at all is always Critical,
- * regardless of attendance rate (there is no attendance to measure).
- */
 export class RiskService {
     /**
      * Compute risk status for an individual school record or an aggregate.

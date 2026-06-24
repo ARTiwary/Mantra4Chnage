@@ -1,20 +1,5 @@
 import { RiskService } from './risk.services.js';
 
-/**
- * Insight Service
- *
- * This is the deterministic bridge between raw aggregation (totals, rates,
- * groupings) and anything narrative (AI or otherwise). It answers: "what
- * are the 4-6 things a program lead needs to know before a review
- * meeting?" — entirely in code, with no AI involved.
- *
- * Per the assignment's preferred flow:
- *   deterministic calculations -> structured insights -> generated narrative
- * This file IS the "structured insights" step. Both the Monthly Review
- * Summary and the Program Reporting Assistant consume its output, then
- * optionally hand it to GroqService for prose — but the structured object
- * returned here is itself a complete, useful answer with AI disabled.
- */
 export class InsightService {
     static buildMonthlyReviewSummary({ summary, previousSummary, districtBreakdown, blockBreakdown, month, previousMonth }) {
         const movement = previousSummary

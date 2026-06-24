@@ -9,12 +9,7 @@ const RISK_STYLES = {
 
 const DEFAULT_STYLE = { text: 'text-ink-soft', bg: 'bg-rule-soft', dot: 'bg-ink-soft' };
 
-/**
- * A risk status indicator styled like a margin annotation on a reviewed
- * document — a small colored mark plus a label, not a rounded SaaS pill.
- * This is the platform's signature recurring visual element, tying every
- * table row and KPI back to the deterministic risk engine.
- */
+
 export default function RiskBadge({ status, size = 'md' }) {
     const style = RISK_STYLES[status] || DEFAULT_STYLE;
     const sizing = size === 'sm'

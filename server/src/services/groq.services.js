@@ -6,15 +6,7 @@ dotenv.config();
 const apiKey = process.env.GROQ_API_KEY;
 const groq = apiKey ? new Groq({ apiKey }) : null;
 
-/**
- * Groq Narrative Service
- *
- * Hard guardrail (per assignment spec): every narrative-generating workflow
- * must still produce a usable, fact-grounded report section even if AI is
- * disabled or unreachable. This service NEVER throws past its own
- * boundary — every code path returns usable text, either AI-generated or
- * a deterministic fallback built directly from computed facts.
- */
+
 export class GroqService {
     static isEnabled() {
         return Boolean(groq);

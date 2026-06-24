@@ -4,10 +4,7 @@ import { AggregationService } from '../services/aggregation.service.js';
 
 const router = Router();
 
-/**
- * GET /api/dashboard/filters
- * Distinct values for populating filter dropdowns.
- */
+
 router.get('/filters', (req, res) => {
     try {
         const filters = SchoolResponseRepository.getDistinctFilters();
@@ -17,11 +14,7 @@ router.get('/filters', (req, res) => {
     }
 });
 
-/**
- * GET /api/dashboard/summary
- * Headline KPIs for the current filter selection, plus month-over-month
- * movement vs the previous reporting month (when one exists).
- */
+
 router.get('/summary', (req, res) => {
     try {
         const rows = SchoolResponseRepository.getFilteredResponses(req.query);
@@ -44,12 +37,7 @@ router.get('/summary', (req, res) => {
     }
 });
 
-/**
- * GET /api/dashboard/breakdown/district
- * GET /api/dashboard/breakdown/block
- * GET /api/dashboard/breakdown/grade   (grouped by classes_covered text)
- * GET /api/dashboard/breakdown/subject
- */
+
 router.get('/breakdown/district', (req, res) => {
     try {
         const rows = SchoolResponseRepository.getFilteredResponses(req.query);
@@ -80,11 +68,7 @@ router.get('/breakdown/subject', (req, res) => {
     }
 });
 
-/**
- * GET /api/dashboard/priorities
- * Top and bottom performing districts/blocks, for "who needs follow-up
- * first" views.
- */
+
 router.get('/priorities', (req, res) => {
     try {
         const rows = SchoolResponseRepository.getFilteredResponses(req.query);

@@ -1,19 +1,3 @@
-/**
- * Action Service
- *
- * Generates structured "recommended next action" records from the same
- * priority/gap data InsightService already computes — entirely
- * deterministic, no AI involved. Each action links back to a specific
- * geography + metric, has an owner role, a priority tier, a due date
- * offset, and a status, matching the assignment's Tier 3 spec.
- *
- * These are generated fresh on each request rather than persisted, since
- * there's no action-tracking workflow (marking done, reassigning, etc.) in
- * scope for this assignment — they're a planning aid surfaced alongside the
- * review, not a task management system. A production version would persist
- * these to a table with update endpoints; that's called out in the README
- * as a future improvement.
- */
 export class ActionService {
     /**
      * @param {object} insight - output of InsightService.buildMonthlyReviewSummary

@@ -1,16 +1,5 @@
 import { RiskService } from './risk.services.js';
 
-/**
- * Aggregation Service
- *
- * Pure computation layer that turns arrays of raw school_responses rows
- * (as returned by SchoolResponseRepository) into the metrics the dashboard
- * needs: totals, rates, risk distribution, and per-geography breakdowns.
- *
- * Deliberately framework-agnostic and DB-agnostic — takes plain row arrays
- * in, returns plain objects out. This is what makes it unit-testable
- * without a database or HTTP server.
- */
 export class AggregationService {
     /**
      * Compute summary KPIs from an array of school_responses rows.
