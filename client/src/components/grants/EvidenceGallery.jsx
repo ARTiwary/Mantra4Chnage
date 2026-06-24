@@ -19,7 +19,7 @@ export default function EvidenceGallery({ assets }) {
                     <div key={asset.record_id} className="bg-[var(--color-paper-raised)] flex flex-col">
                         <div className="aspect-video bg-[var(--color-rule-soft)] overflow-hidden relative">
                             <img
-                                src={`/images/${asset.file_name}`}
+                                src={`${import.meta.env.VITE_API_BASE_URL || ''}/images/${asset.file_name}`}
                                 alt={asset.title}
                                 className="w-full h-full object-cover"
                                 loading="lazy"
